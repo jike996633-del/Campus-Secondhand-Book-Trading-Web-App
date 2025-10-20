@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>校园二手书交易平台</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- 引入Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <!-- 配置Tailwind -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6',
+            secondary: '#10B981',
+            accent: '#F59E0B',
+            dark: '#1E293B',
+            light: '#F8FAFC'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .card-hover {
+        @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+      }
+      .btn-primary {
+        @apply bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50;
+      }
+      .btn-secondary {
+        @apply bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary/90 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary/50;
+      }
+      .btn-outline {
+        @apply border border-primary text-primary px-4 py-2 rounded-lg hover:bg-primary/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50;
+      }
+      .input-field {
+        @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200;
+      }
+      .section-padding {
+        @apply py-12 md:py-20;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark">
+  <!-- 导航栏 -->
+  <header id="navbar" class="fixed w-full top-0 z-50 transition-all duration-300 bg-white/95 shadow-sm">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="#" class="flex items-center space-x-2">
+        <i class="fa fa-book text-primary text-2xl"></i>
+        <span class="text-xl font-bold text-primary">校园书递</span>
+      </a>
+      
+      <!-- 桌面导航 -->
+      <nav class="hidden md:flex items-center space-x-8">
+        <a href="#" class="nav-link font-medium hover:text-primary transition-colors">首页</a>
+        <a href="#books" class="nav-link font-medium hover:text-primary transition-colors">书籍列表</a>
+        <a href="#publish" class="nav-link font-medium hover:text-primary transition-colors">发布书籍</a>
+        <a href="#about" class="nav-link font-medium hover:text-primary transition-colors">关于我们</a>
+      </nav>
+      
+      <div class="flex items-center space-x-4">
+        <button id="loginBtn" class="hidden md:block btn-outline">登录</button>
+        <button id="registerBtn" class="hidden md:block btn-primary">注册</button>
+        <div id="userMenu" class="hidden items-center space-x-2">
+          <span id="userName" class="font-medium"></span>
+          <div class="relative group">
+            <button class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <i class="fa fa-user"></i>
+            </button>
+            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              <a href="#my-books" class="block px-4 py-2 hover:bg-gray-100 transition-colors">我的书籍</a>
+              <a href="#" id="logoutBtn" class="block px-4 py-2 hover:bg-gray-100 transition-colors">退出登录</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 移动端菜单按钮 -->
+        <button id="mobileMenuBtn" class="md:hidden text-dark hover:text-primary transition-colors">
+          <i class="fa fa-bars text-xl"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 移动端导航菜单 -->
+    <div id="mobileMenu" class="md:hidden bg-white shadow-md absolute w-full left-0 top-full transform -translate-y-full opacity-0 invisible transition-all duration-300">
+      <div class="container mx-auto px-4 py-3 flex flex-col space-y-4">
+        <a href="#" class="py-2 border-b border-gray-100 hover:text-primary transition-colors">首页</a>
+        <a href="#books" class="py-2 border-b border-gray-100 hover:text-primary transition-colors">书籍列表</a>
+        <a href="#publish" class="py-2 border-b border-gray-100 hover:text-primary transition-colors">发布书籍</a>
+        <a href="#about" class="py-2 hover:text-primary transition-colors">关于我们</a>
+        <div class="flex space-x-4 pt-2">
+          <button id="mobileLoginBtn" class="flex-1 btn-outline">登录</button>
+          <button id="mobileRegisterBtn" class="flex-1 btn-primary">注册</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="pt-16">
+    <!-- 英雄区 -->
+    <section class="bg-gradient-to-r from-primary/90 to-primary text-white py-20 md:py-32">
+      <div class="container mx-auto px-4">
+        <div class="max-w-3xl mx-auto text-center">
+          <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold mb-6 leading-tight text-shadow">
+            让每本书都能<span class="text-accent">继续发光</span>
+          </h1>
+          <p class="text-[clamp(1rem,2vw,1.25rem)] mb-8 text-white/90">
+            校园二手书交易平台，轻松买卖二手教材，节约资源，共享知识
+          </p>
+          <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="#books" class="btn-secondary text-lg py-3">
+              浏览书籍 <i class="fa fa-arrow-right ml-2"></i>
+            </a>
+            <a href="#publish" class="bg-white text-primary px-6 py-3 rounded-lg hover:bg-gray-100 transition-all duration-200 text-lg">
+              发布书籍 <i class="fa fa-plus ml-2"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 统计数据 -->
+    <section class="bg-white py-12">
+      <div class="container mx-auto px-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div class="p-6">
+            <div class="text-4xl md:text-5xl font-bold text-primary mb-2" id="bookCount">0</div>
+            <div class="text-gray-600">书籍总数</div>
+          </div>
+          <div class="p-6">
+            <div class="text-4xl md:text-5xl font-bold text-primary mb-2" id="userCount">0</div>
+            <div class="text-gray-600">注册用户</div>
+          </div>
+          <div class="p-6">
+            <div class="text-4xl md:text-5xl font-bold text-primary mb-2" id="transactionCount">0</div>
+            <div class="text-gray-600">成功交易</div>
+          </div>
+          <div class="p-6">
+            <div class="text-4xl md:text-5xl font-bold text-primary mb-2" id="categoryCount">0</div>
+            <div class="text-gray-600">书籍分类</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 书籍列表区 -->
+    <section id="books" class="section-padding bg-gray-50">
+      <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+          <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">二手书籍列表</h2>
+          <p class="text-gray-600 max-w-2xl mx-auto">在这里找到你需要的教材和读物，价格实惠，质量可靠</p>
+        </div>
+
+        <!-- 筛选和搜索 -->
+        <div class="mb-8 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+          <div class="flex flex-wrap gap-2">
+            <button class="category-btn px-4 py-2 rounded-full bg-primary text-white" data-category="all">全部</button>
+            <button class="category-btn px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" data-category="教材">教材</button>
+            <button class="category-btn px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" data-category="小说">小说</button>
+            <button class="category-btn px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" data-category="工具书">工具书</button>
+            <button class="category-btn px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" data-category="其他">其他</button>
+          </div>
+          
+          <div class="relative w-full md:w-64">
+            <input type="text" id="searchInput" placeholder="搜索书籍..." class="input-field pl-10">
+            <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          </div>
+        </div>
+
+        <!-- 书籍网格 -->
+        <div id="booksGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <!-- 书籍卡片将通过JavaScript动态生成 -->
+          <div class="col-span-full text-center py-12">
+            <i class="fa fa-book text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-500">加载书籍中...</p>
+          </div>
+        </div>
+
+        <!-- 加载更多按钮 -->
+        <div class="text-center mt-10">
+          <button id="loadMoreBtn" class="btn-outline">
+            加载更多 <i class="fa fa-refresh ml-2"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 发布书籍区 -->
+    <section id="publish" class="section-padding bg-white">
+      <div class="container mx-auto px-4">
+        <div class="max-w-2xl mx-auto">
+          <div class="text-center mb-10">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">发布二手书籍</h2>
+            <p class="text-gray-600">分享你的闲置书籍，让它们找到新的主人</p>
+          </div>
+
+          <form id="publishForm" class="bg-gray-50 p-6 md:p-8 rounded-xl shadow-sm">
+            <div class="mb-5">
+              <label for="title" class="block text-gray-700 mb-2 font-medium">书籍标题 <span class="text-red-500">*</span></label>
+              <input type="text" id="title" class="input-field" placeholder="例如：JavaScript高级程序设计" required>
+            </div>
+
+            <div class="mb-5">
+              <label for="author" class="block text-gray-700 mb-2 font-medium">作者 <span class="text-red-500">*</span></label>
+              <input type="text" id="author" class="input-field" placeholder="例如：尼古拉斯·泽卡斯" required>
+            </div>
+
+            <div class="mb-5">
+              <label for="category" class="block text-gray-700 mb-2 font-medium">分类 <span class="text-red-500">*</span></label>
+              <select id="category" class="input-field" required>
+                <option value="">请选择分类</option>
+                <option value="教材">教材</option>
+                <option value="小说">小说</option>
+                <option value="工具书">工具书</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+
+            <div class="mb-5">
+              <label for="price" class="block text-gray-700 mb-2 font-medium">价格 (元) <span class="text-red-500">*</span></label>
+              <input type="number" id="price" class="input-field" placeholder="例如：50" min="0" step="0.01" required>
+            </div>
+
+            <div class="mb-5">
+              <label for="condition" class="block text-gray-700 mb-2 font-medium">新旧程度 <span class="text-red-500">*</span></label>
+              <select id="condition" class="input-field" required>
+                <option value="">请选择新旧程度</option>
+                <option value="全新">全新</option>
+                <option value="九成新">九成新</option>
+                <option value="八成新">八成新</option>
+                <option value="七成新">七成新</option>
+                <option value="六成新及以下">六成新及以下</option>
+              </select>
+            </div>
+
+            <div class="mb-6">
+              <label for="contact" class="block text-gray-700 mb-2 font-medium">联系方式 <span class="text-red-500">*</span></label>
+              <input type="text" id="contact" class="input-field" placeholder="例如：微信：zhangsan123" required>
+            </div>
+
+            <div class="text-center">
+              <button type="submit" class="btn-primary w-full md:w-auto px-8 py-3 text-lg">
+                发布书籍 <i class="fa fa-paper-plane ml-2"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- 我的书籍 -->
+    <section id="my-books" class="section-padding bg-gray-50 hidden">
+      <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+          <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">我的书籍</h2>
+          <p class="text-gray-600 max-w-2xl mx-auto">管理你发布的二手书籍</p>
+        </div>
+
+        <div id="myBooksGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <!-- 我的书籍卡片将通过JavaScript动态生成 -->
+          <div class="col-span-full text-center py-12">
+            <i class="fa fa-book text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-500">请先登录查看你的书籍</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 关于我们 -->
+    <section id="about" class="section-padding bg-white">
+      <div class="container mx-auto px-4">
+        <div class="max-w-3xl mx-auto text-center">
+          <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-6">关于校园书递</h2>
+          <p class="text-gray-600 mb-8 text-lg">
+            校园书递是一个专注于校园二手书交易的平台，旨在帮助学生更便捷地买卖二手教材，
+            既节约了资源，也减轻了学生的经济负担。
+          </p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+            <div class="p-6 bg-gray-50 rounded-lg card-hover">
+              <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa fa-leaf text-primary text-2xl"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-2">环保节约</h3>
+              <p class="text-gray-600">减少书籍浪费，促进资源循环利用</p>
+            </div>
+            
+            <div class="p-6 bg-gray-50 rounded-lg card-hover">
+              <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa fa-money text-primary text-2xl"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-2">经济实惠</h3>
+              <p class="text-gray-600">低于市场价的二手书籍，减轻经济负担</p>
+            </div>
+            
+            <div class="p-6 bg-gray-50 rounded-lg card-hover">
+              <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa fa-users text-primary text-2xl"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-2">校园互助</h3>
+              <p class="text-gray-600">建立校园内的知识共享和互助社区</p>
+            </div>
+          </div>
+          
+          <div class="bg-primary/5 p-6 md:p-8 rounded-xl">
+            <h3 class="text-xl font-semibold mb-4">平台数据统计</h3>
+            <div class="h-64">
+              <canvas id="statsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-dark text-white py-12">
+    <div class="container mx-auto px-4">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <div class="flex items-center space-x-2 mb-4">
+            <i class="fa fa-book text-primary text-2xl"></i>
+            <span class="text-xl font-bold">校园书递</span>
+          </div>
+          <p class="text-gray-400 mb-4">让每本书都能继续发光，让知识传递更远</p>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+              <i class="fa fa-weixin text-xl"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+              <i class="fa fa-weibo text-xl"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+              <i class="fa fa-github text-xl"></i>
+            </a>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-semibold mb-4">快速链接</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">首页</a></li>
+            <li><a href="#books" class="text-gray-400 hover:text-white transition-colors">书籍列表</a></li>
+            <li><a href="#publish" class="text-gray-400 hover:text-white transition-colors">发布书籍</a></li>
+            <li><a href="#about" class="text-gray-400 hover:text-white transition-colors">关于我们</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-semibold mb-4">帮助中心</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">使用指南</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">常见问题</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">联系我们</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-semibold mb-4">联系我们</h3>
+          <ul class="space-y-2">
+            <li class="flex items-center text-gray-400">
+              <i class="fa fa-envelope-o mr-2"></i>
+              <span>support@campusbooks.com</span>
+            </li>
+            <li class="flex items-center text-gray-400">
+              <i class="fa fa-phone mr-2"></i>
+              <span>123-4567-8910</span>
+            </li>
+            <li class="flex items-center text-gray-400">
+              <i class="fa fa-map-marker mr-2"></i>
+              <span>校园路100号</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-800 mt-10 pt-6 text-center text-gray-500">
+        <p>&copy; 2025 校园书递 - 校园二手书交易平台 版权所有</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 模态框 - 登录 -->
+  <div id="loginModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center opacity-0 invisible transition-all duration-300">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300">
+      <div class="p-6 md:p-8">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold">用户登录</h3>
+          <button id="closeLoginModal" class="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <form id="loginForm">
+          <div class="mb-5">
+            <label for="loginStudentId" class="block text-gray-700 mb-2 font-medium">学号</label>
+            <input type="text" id="loginStudentId" class="input-field" placeholder="请输入学号" required>
+          </div>
+          
+          <div class="mb-6">
+            <label for="loginPassword" class="block text-gray-700 mb-2 font-medium">密码</label>
+            <input type="password" id="loginPassword" class="input-field" placeholder="请输入密码" required>
+          </div>
+          
+          <button type="submit" class="btn-primary w-full py-3 text-lg mb-4">
+            登录 <i class="fa fa-sign-in ml-2"></i>
+          </button>
+          
+          <div class="text-center">
+            <span class="text-gray-600">还没有账号？</span>
+            <button type="button" id="switchToRegister" class="text-primary font-medium ml-1 hover:underline">立即注册</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框 - 注册 -->
+  <div id="registerModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center opacity-0 invisible transition-all duration-300">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300">
+      <div class="p-6 md:p-8">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold">用户注册</h3>
+          <button id="closeRegisterModal" class="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <form id="registerForm">
+          <div class="mb-5">
+            <label for="registerStudentId" class="block text-gray-700 mb-2 font-medium">学号</label>
+            <input type="text" id="registerStudentId" class="input-field" placeholder="请输入学号" required>
+          </div>
+          
+          <div class="mb-5">
+            <label for="registerName" class="block text-gray-700 mb-2 font-medium">姓名</label>
+            <input type="text" id="registerName" class="input-field" placeholder="请输入姓名" required>
+          </div>
+          
+          <div class="mb-6">
+            <label for="registerPassword" class="block text-gray-700 mb-2 font-medium">密码</label>
+            <input type="password" id="registerPassword" class="input-field" placeholder="请输入密码" required>
+          </div>
+          
+          <button type="submit" class="btn-primary w-full py-3 text-lg mb-4">
+            注册 <i class="fa fa-user-plus ml-2"></i>
+          </button>
+          
+          <div class="text-center">
+            <span class="text-gray-600">已有账号？</span>
+            <button type="button" id="switchToLogin" class="text-primary font-medium ml-1 hover:underline">立即登录</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框 - 书籍详情 -->
+  <div id="bookDetailModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center opacity-0 invisible transition-all duration-300">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 transform scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto">
+      <div class="p-6 md:p-8">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold" id="detailTitle">书籍详情</h3>
+          <button id="closeBookDetailModal" class="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <div id="bookDetailContent" class="space-y-6">
+          <!-- 书籍详情内容将通过JavaScript动态生成 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通知提示 -->
+  <div id="notification" class="fixed top-20 right-4 bg-dark text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full opacity-0 transition-all duration-300 z-50 flex items-center">
+    <i id="notificationIcon" class="fa fa-check-circle mr-2"></i>
+    <span id="notificationMessage"></span>
+  </div>
+
+  <script>
+    // API基础URL
+    const API_BASE_URL = 'http://localhost:5000/api';
+    
+    // 全局状态
+    let state = {
+      token: localStorage.getItem('token') || null,
+      user: JSON.parse(localStorage.getItem('user')) || null,
+      books: [],
+      currentPage: 1,
+      totalPages: 1,
+      currentCategory: 'all',
+      searchQuery: ''
+    };
+
+    // DOM元素
+    const elements = {
+      // 导航栏
+      navbar: document.getElementById('navbar'),
+      loginBtn: document.getElementById('loginBtn'),
+      registerBtn: document.getElementById('registerBtn'),
+      userMenu: document.getElementById('userMenu'),
+      userName: document.getElementById('userName'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      mobileMenuBtn: document.getElementById('mobileMenuBtn'),
+      mobileMenu: document.getElementById('mobileMenu'),
+      mobileLoginBtn: document.getElementById('mobileLoginBtn'),
+      mobileRegisterBtn: document.getElementById('mobileRegisterBtn'),
+      
+      // 模态框
+      loginModal: document.getElementById('loginModal'),
+      registerModal: document.getElementById('registerModal'),
+      bookDetailModal: document.getElementById('bookDetailModal'),
+      
+      // 表单
+      loginForm: document.getElementById('loginForm'),
+      registerForm: document.getElementById('registerForm'),
+      publishForm: document.getElementById('publishForm'),
+      
+      // 书籍列表
+      booksGrid: document.getElementById('booksGrid'),
+      myBooksGrid: document.getElementById('myBooksGrid'),
+      categoryBtns: document.querySelectorAll('.category-btn'),
+      searchInput: document.getElementById('searchInput'),
+      loadMoreBtn: document.getElementById('loadMoreBtn'),
+      
+      // 统计数据
+      bookCount: document.getElementById('bookCount'),
+      userCount: document.getElementById('userCount'),
+      transactionCount: document.getElementById('transactionCount'),
+      categoryCount: document.getElementById('categoryCount'),
+      
+      // 通知
+      notification: document.getElementById('notification'),
+      notificationIcon: document.getElementById('notificationIcon'),
+      notificationMessage: document.getElementById('notificationMessage'),
+      
+      // 我的书籍区域
+      myBooksSection: document.getElementById('my-books')
+    };
+
+    // 工具函数 - 显示通知
+    function showNotification(message, isError = false) {
+      elements.notificationMessage.textContent = message;
+      elements.notificationIcon.className = isError ? 'fa fa-exclamation-circle mr-2 text-red-500' : 'fa fa-check-circle mr-2';
+      elements.notification.classList.remove('translate-x-full', 'opacity-0');
+      
+      setTimeout(() => {
+        elements.notification.classList.add('translate-x-full', 'opacity-0');
+      }, 3000);
+    }
+
+    // 工具函数 - 显示模态框
+    function showModal(modal) {
+      modal.classList.remove('opacity-0', 'invisible');
+      modal.querySelector('div').classList.remove('scale-95');
+      modal.querySelector('div').classList.add('scale-100');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // 工具函数 - 隐藏模态框
+    function hideModal(modal) {
+      modal.classList.add('opacity-0', 'invisible');
+      modal.querySelector('div').classList.remove('scale-100');
+      modal.querySelector('div').classList.add('scale-95');
+      document.body.style.overflow = '';
+    }
+
+    // 工具函数 - 检查是否登录
+    function isLoggedIn() {
+      return !!state.token;
+    }
+
+    // 工具函数 - 更新登录状态UI
+    function updateAuthUI() {
+      if (isLoggedIn()) {
+        // 已登录状态
+        elements.loginBtn.classList.add('hidden');
+        elements.registerBtn.classList.add('hidden');
+        elements.mobileLoginBtn.classList.add('hidden');
+        elements.mobileRegisterBtn.classList.add('hidden');
+        elements.userMenu.classList.remove('hidden');
+        elements.userMenu.classList.add('flex');
+        elements.userName.textContent = state.user.name || '用户';
+        
+        // 显示我的书籍区域
+        elements.myBooksSection.classList.remove('hidden');
+        // 加载我的书籍
+        loadMyBooks();
+      } else {
+        // 未登录状态
+        elements.loginBtn.classList.remove('hidden');
+        elements.registerBtn.classList.remove('hidden');
+        elements.mobileLoginBtn.classList.remove('hidden');
+        elements.mobileRegisterBtn.classList.remove('hidden');
+        elements.userMenu.classList.add('hidden');
+        elements.userMenu.classList.remove('flex');
+        
+        // 隐藏我的书籍区域
+        elements.myBooksSection.classList.add('hidden');
+      }
+    }
+
+    // 工具函数 - 生成书籍卡片HTML
+    function generateBookCard(book, isMyBook = false) {
+      return `
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden card-hover">
+          <div class="h-48 bg-primary/10 flex items-center justify-center">
+            <i class="fa fa-book text-primary text-6xl"></i>
+          </div>
+          <div class="p-5">
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-bold text-lg truncate" title="${book.title}">${book.title}</h3>
+              <span class="text-primary font-bold">¥${book.price}</span>
+            </div>
+            <p class="text-gray-600 text-sm mb-3">作者：${book.author}</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">${book.category}</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">${book.condition}</span>
+              ${book.status === 'sold' ? 
+                '<span class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full">已售出</span>' : 
+                '<span class="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">可交易</span>'
+              }
+            </div>
+            <div class="flex gap-2">
+              <button class="flex-1 btn-outline text-sm py-1 view-book-btn" data-id="${book.id}">
+                详情
+              </button>
+              ${isMyBook ? (
+                book.status === 'sold' ? (
+                  '<button class="flex-1 bg-gray-200 text-gray-600 px-4 py-1 rounded-lg text-sm cursor-not-allowed">已售出</button>'
+                ) : (
+                  '<button class="flex-1 btn-secondary text-sm py-1 mark-sold-btn" data-id="' + book.id + '">标记售出</button>'
+                )
+              ) : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // API函数 - 获取所有书籍
+    async function fetchBooks(page = 1, category = 'all', search = '') {
+      try {
+        // 模拟API调用 - 实际项目中应替换为真实API
+        // 这里使用模拟数据
+        const mockBooks = [
+          {
+            id: 1,
+            title: 'JavaScript高级程序设计',
+            author: '尼古拉斯·泽卡斯',
+            category: '教材',
+            price: 45.00,
+            condition: '九成新',
+            status: 'available',
+            contact: '微信：zhangsan123',
+            userName: '张三',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 2,
+            title: '三体',
+            author: '刘慈欣',
+            category: '小说',
+            price: 25.00,
+            condition: '八成新',
+            status: 'available',
+            contact: 'QQ：12345678',
+            userName: '李四',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 3,
+            title: '现代汉语词典',
+            author: '商务印书馆',
+            category: '工具书',
+            price: 30.00,
+            condition: '七成新',
+            status: 'sold',
+            contact: '电话：13800138000',
+            userName: '王五',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 4,
+            title: '高等数学',
+            author: '同济大学数学系',
+            category: '教材',
+            price: 35.00,
+            condition: '六成新及以下',
+            status: 'available',
+            contact: '微信：lisi456',
+            userName: '赵六',
+            createdAt: new Date().toISOString()
+          }
+        ];
+        
+        // 模拟筛选逻辑
+        let filteredBooks = mockBooks;
+        
+        if (category !== 'all') {
+          filteredBooks = filteredBooks.filter(book => book.category === category);
+        }
+        
+        if (search) {
+          filteredBooks = filteredBooks.filter(book => 
+            book.title.includes(search) || 
+            book.author.includes(search)
+          );
+        }
+        
+        // 模拟分页
+        const pageSize = 8;
+        const startIndex = (page - 1) * pageSize;
+        const paginatedBooks = filteredBooks.slice(startIndex, startIndex + pageSize);
+        
+        return {
+          success: true,
+          data: paginatedBooks,
+          count: filteredBooks.length
+        };
+      } catch (error) {
+        showNotification('获取书籍失败: ' + error.message, true);
+        return null;
+      }
+    }
+
+    // API函数 - 获取我的书籍
+    async function fetchMyBooks() {
+      if (!isLoggedIn()) return null;
+      
+      try {
+        // 模拟API调用 - 实际项目中应替换为真实API
+        const mockMyBooks = [
+          {
+            id: 1,
+            title: 'JavaScript高级程序设计',
+            author: '尼古拉斯·泽卡斯',
+            category: '教材',
+            price: 45.00,
+            condition: '九成新',
+            status: 'available',
+            contact: '微信：zhangsan123',
+            userName: state.user.name,
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 3,
+            title: '现代汉语词典',
+            author: '商务印书馆',
+            category: '工具书',
+            price: 30.00,
+            condition: '七成新',
+            status: 'sold',
+            contact: '电话：13800138000',
+            userName: state.user.name,
+            createdAt: new Date().toISOString()
+          }
+        ];
+        
+        return {
+          success: true,
+          data: mockMyBooks
+        };
+      } catch (error) {
+        showNotification('获取我的书籍失败: ' + error.message, true);
+        return null;
+      }
+    }
+
+    // API函数 - 获取书籍详情
+    async function fetchBookDetail(id) {
+      try {
+        // 模拟API调用 - 实际项目中应替换为真实API
+        const mockBooks = [
+          {
+            id: 1,
+            title: 'JavaScript高级程序设计',
+            author: '尼古拉斯·泽卡斯',
+            category: '教材',
+            price: 45.00,
+            condition: '九成新',
+            status: 'available',
+            contact: '微信：zhangsan123',
+            userName: '张三',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 2,
+            title: '三体',
+            author: '刘慈欣',
+            category: '小说',
+            price: 25.00,
+            condition: '八成新',
+            status: 'available',
+            contact: 'QQ：12345678',
+            userName: '李四',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 3,
+            title: '现代汉语词典',
+            author: '商务印书馆',
+            category: '工具书',
+            price: 30.00,
+            condition: '七成新',
+            status: 'sold',
+            contact: '电话：13800138000',
+            userName: '王五',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 4,
+            title: '高等数学',
+            author: '同济大学数学系',
+            category: '教材',
+            price: 35.00,
+            condition: '六成新及以下',
+            status: 'available',
+            contact: '微信：lisi456',
+            userName: '赵六',
+            createdAt: new Date().toISOString()
+          }
+        ];
+        
+        const book = mockBooks.find(b => b.id === parseInt(id));
+        
+        if (!book) {
+          throw new Error('书籍不存在');
+        }
+        
+        return {
+          success: true,
+          data: book
+        };
+      } catch (error) {
+        showNotification('获取书籍详情失败: ' + error.message, true);
+        return null;
+      }
+    }
+
+    // API函数 - 注册
+    async function register(studentId, name, password) {
+      try {
+        // 模拟API调用 - 实际项目中应替换为真实API
+        // 模拟网络延迟
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 模拟注册成功
+        const user = {
+          id: Math.floor(Math.random() * 1000),
+          studentId,
+          name
+        };
+        
+        const token = 'mock_jwt_token_' + Date.now();
+        
+        return {
+          success: true,
+          user,
+          token
+        };
+      } catch (error) {
+        showNotification(error.message, true);
+        return null;
+      }
+    }
+
+    // API函数 - 登录
+    async function login(studentId, password) {
+      try {
+        // 模拟API调用 - 实际项目中应替换为真实API
+        // 模拟网络延迟
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 模拟登录成功
+        const user = {
+          id: Math.floor(Math.random() * 1000),
+          studentId,
+          name: '用户' + studentId
+        };
+        
+        const token = 'mock_jwt_token_' + Date.now();
+        
+        return {
+          success: true,
+          user,
+          token
+        };
+      } catch (error) {
+        showNotification(error.message, true);
+        return null;
+      }
+    }
+
+    // API函数 - 发布书籍
+    async function publishBook(bookData) {
+      if (!isLoggedIn()) {
+        showNotification('请先登录', true);
+        showModal(elements.loginModal);
+        return null;
+      }
+      
+      try {
+        // 模拟API调用 - 实际项目中应替换为真实API
+        // 模拟网络延迟
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 模拟发布成功
+        const newBook = {
+          id: Math.floor(Math.random() * 1000) + 100,
+          ...bookData,
+          status: 'available',
+          userName: state.user.name,
+          createdAt: new Date().toISOString()
+        };
+        
+        return {
+          success: true,
+          data: newBook
+        };
+      } catch (error) {
+        showNotification(error.message, true);
+        return null;
+      }
+    }
+
+    // API函数 - 标记书籍为已售出
+    async function markBookAsSold(id) {
+      if (!isLoggedIn()) {
+        showNotification('请先登录', true);
+        return false;
+      }
+      
+      try {
+        // 模拟API调用 - 实际项目中应替换为真实API
+        // 模拟网络延迟
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        return true;
+      } catch (error) {
+        showNotification(error.message, true);
+        return false;
+      }
+    }
+
+    // 函数 - 加载书籍列表
+    async function loadBooks(page = 1, append = false) {
+      const result = await fetchBooks(page, state.currentCategory, state.searchQuery);
+      
+      if (!result || !result.success) {
+        elements.booksGrid.innerHTML = `
+          <div class="col-span-full text-center py-12">
+            <i class="fa fa-exclamation-triangle text-yellow-500 text-5xl mb-4"></i>
+            <p class="text-gray-500">加载书籍失败，请稍后重试</p>
+          </div>
+        `;
+        return;
+      }
+      
+      state.totalPages = Math.ceil(result.count / 8); // 假设每页8条
+      state.currentPage = page;
+      
+      if (!append) {
+        elements.booksGrid.innerHTML = '';
+      }
+      
+      if (result.data.length === 0) {
+        elements.booksGrid.innerHTML = `
+          <div class="col-span-full text-center py-12">
+            <i class="fa fa-search text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-500">未找到匹配的书籍</p>
+          </div>
+        `;
+        elements.loadMoreBtn.classList.add('hidden');
+        return;
+      }
+      
+      result.data.forEach(book => {
+        elements.booksGrid.innerHTML += generateBookCard(book);
+      });
+      
+      // 更新加载更多按钮状态
+      if (state.currentPage >= state.totalPages) {
+        elements.loadMoreBtn.classList.add('hidden');
+      } else {
+        elements.loadMoreBtn.classList.remove('hidden');
+      }
+      
+      // 添加查看详情事件监听
+      document.querySelectorAll('.view-book-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const bookId = btn.getAttribute('data-id');
+          showBookDetail(bookId);
+        });
+      });
+    }
+
+    // 函数 - 加载我的书籍
+    async function loadMyBooks() {
+      if (!isLoggedIn()) return;
+      
+      const result = await fetchMyBooks();
+      
+      if (!result || !result.success) {
+        elements.myBooksGrid.innerHTML = `
+          <div class="col-span-full text-center py-12">
+            <i class="fa fa-exclamation-triangle text-yellow-500 text-5xl mb-4"></i>
+            <p class="text-gray-500">加载我的书籍失败，请稍后重试</p>
+          </div>
+        `;
+        return;
+      }
+      
+      if (result.data.length === 0) {
+        elements.myBooksGrid.innerHTML = `
+          <div class="col-span-full text-center py-12">
+            <i class="fa fa-book text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-500">你还没有发布任何书籍</p>
+            <a href="#publish" class="inline-block mt-4 btn-primary">
+              立即发布 <i class="fa fa-plus ml-1"></i>
+            </a>
+          </div>
+        `;
+        return;
+      }
+      
+      elements.myBooksGrid.innerHTML = '';
+      result.data.forEach(book => {
+        elements.myBooksGrid.innerHTML += generateBookCard(book, true);
+      });
+      
+      // 添加查看详情事件监听
+      document.querySelectorAll('.view-book-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const bookId = btn.getAttribute('data-id');
+          showBookDetail(bookId);
+        });
+      });
+      
+      // 添加标记售出事件监听
+      document.querySelectorAll('.mark-sold-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const bookId = btn.getAttribute('data-id');
+          const success = await markBookAsSold(bookId);
+          if (success) {
+            showNotification('书籍已标记为售出');
+            loadMyBooks();
+            loadBooks(); // 同时更新书籍列表
+          }
+        });
+      });
+    }
+
+    // 函数 - 显示书籍详情
+    async function showBookDetail(id) {
+      const result = await fetchBookDetail(id);
+      
+      if (!result || !result.success) {
+        return;
+      }
+      
+      const book = result.data;
+      
+      document.getElementById('detailTitle').textContent = book.title;
+      
+      document.getElementById('bookDetailContent').innerHTML = `
+        <div class="flex flex-col md:flex-row gap-6">
+          <div class="md:w-1/3 h-64 bg-primary/10 rounded-lg flex items-center justify-center">
+            <i class="fa fa-book text-primary text-7xl"></i>
+          </div>
+          <div class="md:w-2/3 space-y-4">
+            <div>
+              <h4 class="text-gray-500 text-sm">作者</h4>
+              <p class="font-medium">${book.author}</p>
+            </div>
+            <div>
+              <h4 class="text-gray-500 text-sm">分类</h4>
+              <p class="font-medium">${book.category}</p>
+            </div>
+            <div>
+              <h4 class="text-gray-500 text-sm">价格</h4>
+              <p class="font-medium text-primary text-xl">¥${book.price}</p>
+            </div>
+            <div>
+              <h4 class="text-gray-500 text-sm">新旧程度</h4>
+              <p class="font-medium">${book.condition}</p>
+            </div>
+            <div>
+              <h4 class="text-gray-500 text-sm">状态</h4>
+              <p class="font-medium ${book.status === 'sold' ? 'text-red-500' : 'text-green-500'}">
+                ${book.status === 'sold' ? '已售出' : '可交易'}
+              </p>
+            </div>
+            <div>
+              <h4 class="text-gray-500 text-sm">发布者</h4>
+              <p class="font-medium">${book.userName || '未知用户'}</p>
+            </div>
+            <div>
+              <h4 class="text-gray-500 text-sm">发布时间</h4>
+              <p class="font-medium">${new Date(book.createdAt).toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="pt-4 border-t border-gray-100">
+          <h4 class="text-gray-500 text-sm mb-2">联系方式</h4>
+          <p class="font-medium p-3 bg-gray-50 rounded-lg">${book.contact}</p>
+        </div>
+        
+        ${book.status !== 'sold' ? `
+          <div class="pt-4 border-t border-gray-100 flex justify-end">
+            <button class="btn-primary">
+              联系卖家 <i class="fa fa-comments ml-2"></i>
+            </button>
+          </div>
+        ` : ''}
+      `;
+      
+      showModal(elements.bookDetailModal);
+    }
+
+    // 函数 - 处理注册表单提交
+    async function handleRegister(e) {
+      e.preventDefault();
+      
+      const studentId = document.getElementById('registerStudentId').value.trim();
+      const name = document.getElementById('registerName').value.trim();
+      const password = document.getElementById('registerPassword').value.trim();
+      
+      // 简单表单验证
+      if (!studentId || !name || !password) {
+        showNotification('请填写完整信息', true);
+        return;
+      }
+      
+      const result = await register(studentId, name, password);
+      
+      if (result && result.success) {
+        // 注册成功，保存token和用户信息
+        state.token = result.token;
+        state.user = result.user;
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        
+        // 更新UI
+        updateAuthUI();
+        hideModal(elements.registerModal);
+        showNotification('注册成功，欢迎使用！');
+        
+        // 重置表单
+        elements.registerForm.reset();
+      }
+    }
+
+    // 函数 - 处理登录表单提交
+    async function handleLogin(e) {
+      e.preventDefault();
+      
+      const studentId = document.getElementById('loginStudentId').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      
+      // 简单表单验证
+      if (!studentId || !password) {
+        showNotification('请填写完整信息', true);
+        return;
+      }
+      
+      const result = await login(studentId, password);
+      
+      if (result && result.success) {
+        // 登录成功，保存token和用户信息
+        state.token = result.token;
+        state.user = result.user;
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        
+        // 更新UI
+        updateAuthUI();
+        hideModal(elements.loginModal);
+        showNotification('登录成功，欢迎回来！');
+        
+        // 重置表单
+        elements.loginForm.reset();
+      }
+    }
+
+    // 函数 - 处理发布书籍表单提交
+    async function handlePublish(e) {
+      e.preventDefault();
+      
+      const bookData = {
+        title: document.getElementById('title').value.trim(),
+        author: document.getElementById('author').value.trim(),
+        category: document.getElementById('category').value,
+        price: parseFloat(document.getElementById('price').value),
+        condition: document.getElementById('condition').value,
+        contact: document.getElementById('contact').value.trim()
+      };
+      
+      // 简单表单验证
+      if (!bookData.title || !bookData.author || !bookData.category || !bookData.price || !bookData.condition || !bookData.contact) {
+        showNotification('请填写完整信息', true);
+        return;
+      }
+      
+      const result = await publishBook(bookData);
+      
+      if (result && result.success) {
+        showNotification('书籍发布成功！');
+        elements.publishForm.reset();
+        
+        // 刷新书籍列表和我的书籍
+        loadBooks(1);
+        loadMyBooks();
+      }
+    }
+
+    // 函数 - 登出
+    function logout() {
+      // 清除状态
+      state.token = null;
+      state.user = null;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // 更新UI
+      updateAuthUI();
+      showNotification('已成功退出登录');
+    }
+
+    // 函数 - 初始化统计图表
+    function initStatsChart() {
+      const ctx = document.getElementById('statsChart').getContext('2d');
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['教材', '小说', '工具书', '其他'],
+          datasets: [{
+            label: '书籍数量',
+            data: [120, 85, 45, 30],
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.7)',
+              'rgba(16, 185, 129, 0.7)',
+              'rgba(245, 158, 11, 0.7)',
+              'rgba(139, 92, 246, 0.7)'
+            ],
+            borderColor: [
+              'rgb(59, 130, 246)',
+              'rgb(16, 185, 129)',
+              'rgb(245, 158, 11)',
+              'rgb(139, 92, 246)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    // 函数 - 数字增长动画
+    function animateValue(element, start, end, duration) {
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        element.textContent = Math.floor(progress * (end - start) + start);
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        }
+      };
+      window.requestAnimationFrame(step);
+    }
+
+    // 函数 - 初始化统计数据
+    function initStats() {
+      // 模拟数据加载
+      setTimeout(() => {
+        animateValue(elements.bookCount, 0, 280, 2000);
+        animateValue(elements.userCount, 0, 156, 2000);
+        animateValue(elements.transactionCount, 0, 98, 2000);
+        animateValue(elements.categoryCount, 0, 4, 2000);
+      }, 500);
+    }
+
+    // 事件监听 - 页面加载完成
+    document.addEventListener('DOMContentLoaded', () => {
+      // 初始化登录状态
+      updateAuthUI();
+      
+      // 加载书籍列表
+      loadBooks();
+      
+      // 初始化统计数据和图表
+      initStats();
+      initStatsChart();
+      
+      // 导航栏滚动效果
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+          elements.navbar.classList.add('py-2', 'shadow');
+          elements.navbar.classList.remove('py-3');
+        } else {
+          elements.navbar.classList.add('py-3');
+          elements.navbar.classList.remove('py-2', 'shadow');
+        }
+      });
+      
+      // 移动端菜单切换
+      elements.mobileMenuBtn.addEventListener('click', () => {
+        if (elements.mobileMenu.classList.contains('invisible')) {
+          elements.mobileMenu.classList.remove('opacity-0', 'invisible', '-translate-y-full');
+          elements.mobileMenu.classList.add('opacity-100', 'visible', 'translate-y-0');
+        } else {
+          elements.mobileMenu.classList.add('opacity-0', 'invisible', '-translate-y-full');
+          elements.mobileMenu.classList.remove('opacity-100', 'visible', 'translate-y-0');
+        }
+      });
+      
+      // 修复：登录模态框显示/隐藏
+      elements.loginBtn.addEventListener('click', () => {
+        showModal(elements.loginModal);
+      });
+      elements.mobileLoginBtn.addEventListener('click', () => {
+        showModal(elements.loginModal);
+      });
+      elements.closeLoginModal.addEventListener('click', () => {
+        hideModal(elements.loginModal);
+      });
+      
+      // 修复：注册模态框显示/隐藏
+      elements.registerBtn.addEventListener('click', () => {
+        showModal(elements.registerModal);
+      });
+      elements.mobileRegisterBtn.addEventListener('click', () => {
+        showModal(elements.registerModal);
+      });
+      elements.closeRegisterModal.addEventListener('click', () => {
+        hideModal(elements.registerModal);
+      });
+      
+      // 修复：点击模态框背景关闭模态框
+      elements.loginModal.addEventListener('click', (e) => {
+        if (e.target === elements.loginModal) {
+          hideModal(elements.loginModal);
+        }
+      });
+      elements.registerModal.addEventListener('click', (e) => {
+        if (e.target === elements.registerModal) {
+          hideModal(elements.registerModal);
+        }
+      });
+      elements.bookDetailModal.addEventListener('click', (e) => {
+        if (e.target === elements.bookDetailModal) {
+          hideModal(elements.bookDetailModal);
+        }
+      });
+      
+      // 切换登录/注册
+      document.getElementById('switchToRegister').addEventListener('click', () => {
+        hideModal(elements.loginModal);
+        setTimeout(() => showModal(elements.registerModal), 300);
+      });
+      
+      document.getElementById('switchToLogin').addEventListener('click', () => {
+        hideModal(elements.registerModal);
+        setTimeout(() => showModal(elements.loginModal), 300);
+      });
+      
+      // 关闭书籍详情模态框
+      elements.closeBookDetailModal.addEventListener('click', () => {
+        hideModal(elements.bookDetailModal);
+      });
+      
+      // 登录表单提交
+      elements.loginForm.addEventListener('submit', handleLogin);
+      
+      // 注册表单提交
+      elements.registerForm.addEventListener('submit', handleRegister);
+      
+      // 发布书籍表单提交
+      elements.publishForm.addEventListener('submit', handlePublish);
+      
+      // 登出
+      elements.logoutBtn.addEventListener('click', logout);
+      
+      // 分类筛选
+      elements.categoryBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          // 更新按钮样式
+          elements.categoryBtns.forEach(b => {
+            b.classList.remove('bg-primary', 'text-white');
+            b.classList.add('bg-gray-200', 'hover:bg-gray-300');
+          });
+          btn.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+          btn.classList.add('bg-primary', 'text-white');
+          
+          // 更新状态并重新加载书籍
+          state.currentCategory = btn.getAttribute('data-category');
+          loadBooks(1);
+        });
+      });
+      
+      // 搜索功能
+      elements.searchInput.addEventListener('input', (e) => {
+        state.searchQuery = e.target.value.trim();
+        loadBooks(1);
+      });
+      
+      // 加载更多
+      elements.loadMoreBtn.addEventListener('click', () => {
+        loadBooks(state.currentPage + 1, true);
+      });
+      
+      // 平滑滚动
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // 关闭移动菜单（如果打开）
+          elements.mobileMenu.classList.add('opacity-0', 'invisible', '-translate-y-full');
+          elements.mobileMenu.classList.remove('opacity-100', 'visible', 'translate-y-0');
+          
+          const targetId = this.getAttribute('href');
+          if (targetId === '#') return;
+          
+          const targetElement = document.querySelector(targetId);
+          if (targetElement) {
+            window.scrollTo({
+              top: targetElement.offsetTop - 80,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
